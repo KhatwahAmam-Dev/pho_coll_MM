@@ -1,19 +1,40 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="dark">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Toko Collage - Mockup</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<title>Toko Collage · Canvas Renderer</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  * { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-  body { background: #0a0a0f; color: #e5e7eb; overflow-x: hidden; }
+  :root {
+    --bg: #0a0a0f;
+    --bg-soft: rgba(255,255,255,0.04);
+    --bg-card: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.08);
+    --text: #e5e7eb;
+    --text-muted: #9ca3af;
+    --text-dim: #6b7280;
+    --slot-bg: repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0 10px, rgba(255,255,255,0.06) 10px 20px);
+  }
+  [data-theme="light"] {
+    --bg: #f4f5fa;
+    --bg-soft: rgba(255,255,255,0.85);
+    --bg-card: rgba(255,255,255,0.95);
+    --border: rgba(0,0,0,0.08);
+    --text: #1a1a2e;
+    --text-muted: #4b5563;
+    --text-dim: #6b7280;
+    --slot-bg: repeating-linear-gradient(45deg, rgba(0,0,0,0.02) 0 10px, rgba(0,0,0,0.05) 10px 20px);
+  }
+  * { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); margin: 0; overflow-x: hidden; transition: background .25s, color .25s; }
+  .app { max-width: 480px; margin: 0 auto; min-height: 100vh; padding-bottom: 30px; }
+
   .glass {
-    background: rgba(255,255,255,0.04);
+    background: var(--bg-soft);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid var(--border);
   }
   .grad-primary { background: linear-gradient(135deg, #7C3AED 0%, #3B82F6 100%); }
   .grad-text {
@@ -22,671 +43,738 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  .glow { box-shadow: 0 0 40px rgba(124, 58, 237, 0.35); }
-  .page { display: none; animation: fadeIn .35s ease; }
-  .page.active { display: block; }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes pulse-dot {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-  .pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
-  @keyframes flash {
-    0% { background: rgba(255,255,255,0); }
-    50% { background: rgba(255,255,255,0.85); }
-    100% { background: rgba(255,255,255,0); }
-  }
-  .flash { animation: flash .3s ease; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .spin { animation: spin 1s linear infinite; }
-  .no-scrollbar::-webkit-scrollbar { display: none; }
-  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-  .checklist-item:active { background: rgba(124,58,237,0.12); }
+  .glow { box-shadow: 0 0 30px rgba(124, 58, 237, 0.35); }
   .toast {
-    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
     opacity: 0; transition: all .3s ease; pointer-events: none; z-index: 100;
+    padding: 12px 22px; border-radius: 16px; font-size: 13px; font-weight: 600;
+    background: rgba(20,20,30,0.95); color: #fff; border: 1px solid rgba(255,255,255,0.1);
+    max-width: 90%; text-align: center;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .photo-slot {
-    background: repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0 10px, rgba(255,255,255,0.06) 10px 20px);
-    border: 1.5px dashed rgba(255,255,255,0.15);
+
+  .header {
+    padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 30;
   }
-  .photo-filled {
-    background: linear-gradient(135deg, #4c1d95 0%, #1e3a8a 100%);
-    border: 1px solid rgba(255,255,255,0.15);
+  .header .logo {
+    width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
   }
-  .cam-view {
-    background: linear-gradient(160deg, #1a1a2e 0%, #0f0f1a 100%);
+  .header h1 { font-size: 14px; font-weight: 700; margin: 0; }
+  .header p { font-size: 11px; color: var(--text-muted); margin: 0; }
+
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: var(--bg-soft); border: 1px solid var(--border); cursor: pointer; font-size: 15px;
+    transition: transform .15s;
   }
-  .template-card { transition: all .2s ease; cursor: pointer; }
-  .template-card:hover { transform: translateY(-2px); }
-  .template-card.active {
-    border-color: #7C3AED !important;
-    background: rgba(124,58,237,0.15);
+  .icon-btn:active { transform: scale(0.92); }
+
+  .section { padding: 0 20px; margin-bottom: 18px; }
+  .section h3 { font-size: 13px; font-weight: 700; margin: 0 0 10px; display: flex; align-items: center; gap: 6px; }
+
+  .field {
+    background: var(--bg-soft); border: 1px solid var(--border); border-radius: 14px;
+    padding: 10px 14px; display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+  }
+  .field label { font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 2px; }
+  .field input, .field select {
+    background: transparent; border: none; outline: none; width: 100%;
+    font-size: 13px; color: var(--text); font-family: inherit; font-weight: 500;
+  }
+  .field select option { background: var(--bg); color: var(--text); }
+
+  /* Upload grid */
+  .upload-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  }
+  .upload-slot {
+    aspect-ratio: 1; border-radius: 12px; background: var(--slot-bg);
+    border: 1.5px dashed var(--border); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; position: relative; overflow: hidden;
+    transition: all .2s;
+  }
+  .upload-slot:hover { border-color: #7C3AED; }
+  .upload-slot img {
+    width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0;
+  }
+  .upload-slot .plus { font-size: 22px; color: var(--text-dim); }
+  .upload-slot .ts-badge {
+    position: absolute; bottom: 4px; left: 4px; font-size: 9px; font-family: monospace;
+    background: rgba(0,0,0,0.7); color: #fff; padding: 2px 5px; border-radius: 4px; z-index: 2;
+  }
+  .upload-slot .remove-btn {
+    position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(239,68,68,0.9); color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; z-index: 3; cursor: pointer; border: none;
+  }
+  .upload-slot input[type=file] { display: none; }
+
+  /* Template picker */
+  .template-row {
+    display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .template-row::-webkit-scrollbar { display: none; }
+  .tpl-card {
+    flex-shrink: 0; width: 76px; padding: 8px; border-radius: 12px;
+    background: var(--bg-soft); border: 1px solid var(--border); cursor: pointer;
+    transition: all .2s;
+  }
+  .tpl-card.active {
+    border-color: #7C3AED; background: rgba(124,58,237,0.15);
+    box-shadow: 0 0 0 1px #7C3AED inset;
+  }
+  .tpl-card p { font-size: 10px; text-align: center; margin: 6px 0 0; font-weight: 600; }
+  .tpl-preview { display: grid; gap: 2px; aspect-ratio: 1; }
+  .tpl-preview div { background: rgba(167,139,250,0.4); border-radius: 2px; }
+
+  /* Canvas wrapper */
+  .canvas-wrap {
+    background: var(--bg-soft); border: 1px solid var(--border); border-radius: 18px;
+    padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  #collageCanvas {
+    width: 100%; max-width: 400px; height: auto; border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    background: #1a1a2e;
+  }
+  .canvas-info { font-size: 11px; color: var(--text-muted); text-align: center; }
+
+  /* Action buttons */
+  .btn {
+    width: 100%; padding: 15px; border-radius: 16px; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 700; font-family: inherit; transition: transform .15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: linear-gradient(135deg, #7C3AED 0%, #3B82F6 100%); color: #fff; }
+  .btn-secondary { background: var(--bg-soft); border: 1px solid var(--border); color: var(--text); }
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* Theme icon */
+  #themeIcon { display: inline-block; transition: transform .4s ease; }
+  .theme-spin { transform: rotate(360deg); }
+
+  /* Empty state di canvas */
+  .empty-hint {
+    font-size: 11px; color: var(--text-dim); text-align: center; padding: 8px;
   }
 </style>
 </head>
 <body>
 
-<!-- ================= APP CONTAINER ================= -->
-<div class="max-w-md mx-auto min-h-screen relative pb-20">
+<div class="app">
 
-  <!-- ============ PAGE 1: LOGIN ============ -->
-  <div id="page-login" class="page active min-h-screen flex flex-col justify-center px-6 py-10">
-    <div class="text-center mb-10">
-      <div class="w-20 h-20 grad-primary rounded-3xl mx-auto flex items-center justify-center glow mb-4 text-4xl">🏪</div>
-      <h1 class="text-3xl font-extrabold grad-text">Toko Collage</h1>
-      <p class="text-gray-400 text-sm mt-1">Daily Activity Documentation</p>
-    </div>
-
-    <div class="space-y-4">
+  <!-- HEADER -->
+  <div class="header glass">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div class="logo grad-primary">🖼️</div>
       <div>
-        <label class="text-xs text-gray-400 font-semibold mb-1.5 block">Email / ID Karyawan</label>
-        <div class="glass rounded-2xl px-4 py-3.5 flex items-center gap-3">
-          <span class="text-lg">📧</span>
-          <input type="text" value="budi@tokoA.com" class="bg-transparent outline-none flex-1 text-sm" />
-        </div>
-      </div>
-
-      <div>
-        <label class="text-xs text-gray-400 font-semibold mb-1.5 block">Password</label>
-        <div class="glass rounded-2xl px-4 py-3.5 flex items-center gap-3">
-          <span class="text-lg">🔒</span>
-          <input type="password" value="password123" class="bg-transparent outline-none flex-1 text-sm" />
-          <span class="text-lg cursor-pointer">👁️</span>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-between text-xs pt-1">
-        <label class="flex items-center gap-2 text-gray-400 cursor-pointer">
-          <input type="checkbox" checked class="accent-violet-500" /> Ingat saya
-        </label>
-        <span class="text-violet-400 cursor-pointer">Lupa password?</span>
-      </div>
-
-      <button onclick="go('dashboard')" class="w-full grad-primary rounded-2xl py-4 font-bold text-white glow active:scale-95 transition mt-4">
-        🚀 MASUK
-      </button>
-
-      <div class="flex items-center gap-3 text-xs text-gray-500 py-2">
-        <div class="flex-1 h-px bg-white/10"></div>
-        <span>atau</span>
-        <div class="flex-1 h-px bg-white/10"></div>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3">
-        <button class="glass rounded-2xl py-3 text-xs font-semibold active:scale-95 transition">📱 Login via NIK</button>
-        <button class="glass rounded-2xl py-3 text-xs font-semibold active:scale-95 transition">🏪 Pilih Outlet</button>
+        <h1>Collage Builder</h1>
+        <p>Canvas Renderer · v2.0</p>
       </div>
     </div>
-
-    <p class="text-center text-xs text-gray-600 mt-10">v1.0 · © 2026 Toko Collage</p>
+    <button class="icon-btn" onclick="toggleTheme()">
+      <span id="themeIcon">🌙</span>
+    </button>
   </div>
 
-  <!-- ============ PAGE 2: DASHBOARD ============ -->
-  <div id="page-dashboard" class="page">
-    <!-- Header -->
-    <div class="glass sticky top-0 z-30 px-5 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <div class="w-9 h-9 grad-primary rounded-xl flex items-center justify-center text-lg">🏪</div>
-        <span class="font-bold text-sm">Toko Collage</span>
-      </div>
-      <div class="flex items-center gap-3">
-        <button onclick="showToast('🔔 Tidak ada notifikasi baru')" class="text-lg">🔔</button>
-        <button onclick="toggleUserMenu()" class="text-lg">👤</button>
+  <!-- INFO KEGIATAN -->
+  <div class="section" style="margin-top: 16px;">
+    <h3>📋 Info Kegiatan</h3>
+    <div class="field">
+      <span>🏪</span>
+      <div style="flex: 1;">
+        <label>Outlet</label>
+        <input id="metaOutlet" type="text" value="Toko A - Jakarta Selatan" />
       </div>
     </div>
-
-    <!-- User menu dropdown -->
-    <div id="userMenu" class="hidden absolute right-4 top-16 glass rounded-2xl p-2 z-40 w-44">
-      <div class="px-3 py-2 text-xs text-gray-400">Login sebagai</div>
-      <div class="px-3 py-1 text-sm font-semibold">Budi Santoso</div>
-      <div class="h-px bg-white/10 my-1"></div>
-      <button onclick="go('login'); showToast('👋 Berhasil logout')" class="w-full text-left px-3 py-2.5 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition">🚪 Logout</button>
+    <div class="field">
+      <span>📂</span>
+      <div style="flex: 1;">
+        <label>Kategori Kegiatan</label>
+        <select id="metaKategori">
+          <option>Buka Toko</option>
+          <option selected>Store Ready</option>
+          <option>KWH Listrik Pagi</option>
+          <option>Kebersihan Rak</option>
+          <option>Briefing Pagi</option>
+          <option>Cek Expired</option>
+          <option>Aktifitas Harian</option>
+          <option>Serah Terima Tugas</option>
+          <option>Briefing Siang</option>
+          <option>Implementasi Promo</option>
+          <option>KWH Listrik Malam</option>
+          <option>Closing</option>
+        </select>
+      </div>
     </div>
-
-    <div class="px-5 pt-5 space-y-4">
-      <!-- Greeting -->
-      <div class="glass rounded-3xl p-5">
-        <div class="flex items-start justify-between">
-          <div>
-            <p class="text-lg font-bold">👋 Halo, Budi</p>
-            <p class="text-xs text-gray-400 mt-1">Shift Pagi · 📍 Toko A - Jaksel</p>
-            <p class="text-xs text-gray-400 mt-0.5" id="liveClock">📅 Sabtu, 12 Feb 2026 · 🕗 --:--:--</p>
-          </div>
-          <span class="text-xs px-2.5 py-1 rounded-full bg-green-500/20 text-green-400 font-semibold">AKTIF</span>
-        </div>
+    <div class="field">
+      <span>👤</span>
+      <div style="flex: 1;">
+        <label>Nama Crew</label>
+        <input id="metaNama" type="text" value="Budi Santoso" />
       </div>
-
-      <!-- Quick Actions -->
-      <div class="grid grid-cols-2 gap-3">
-        <div class="glass rounded-3xl p-4">
-          <div class="flex items-center gap-2 mb-2">
-            <span class="text-2xl">📸</span>
-            <span class="font-bold text-sm">Kamera</span>
-          </div>
-          <div class="flex items-center gap-1.5 text-xs mb-3">
-            <span id="camStatusDot" class="w-2 h-2 rounded-full bg-green-400 pulse-dot"></span>
-            <span id="camStatusText" class="text-green-400 font-semibold">Aktif</span>
-          </div>
-          <button onclick="toggleCam()" class="w-full glass rounded-xl py-2 text-xs font-semibold active:scale-95 transition">
-            ⏻ Toggle
-          </button>
-        </div>
-
-        <div class="glass rounded-3xl p-4 cursor-pointer active:scale-95 transition" onclick="go('collage')">
-          <div class="flex items-center gap-2 mb-2">
-            <span class="text-2xl">🖼️</span>
-            <span class="font-bold text-sm">Collage</span>
-          </div>
-          <p class="text-xs text-gray-400 mb-3"><span class="text-violet-400 font-bold">3</span> draft siap</p>
-          <button class="w-full grad-primary rounded-xl py-2 text-xs font-semibold text-white">
-            Lihat Draft →
-          </button>
-        </div>
+    </div>
+    <div class="field">
+      <span>🕐</span>
+      <div style="flex: 1;">
+        <label>Shift</label>
+        <select id="metaShift">
+          <option selected>Shift Pagi</option>
+          <option>Shift Siang</option>
+          <option>Shift Malam</option>
+        </select>
       </div>
-
-      <!-- Checklist -->
-      <div>
-        <h3 class="text-sm font-bold mb-3 flex items-center gap-2">📋 Checklist Hari Ini</h3>
-        <div class="space-y-2">
-          <!-- item done -->
-          <div class="glass rounded-2xl p-4 flex items-center gap-3 checklist-item">
-            <span class="text-lg">✅</span>
-            <div class="flex-1">
-              <p class="text-sm font-semibold">Buka Toko</p>
-              <p class="text-xs text-gray-500">1/1 foto · 08:10</p>
-            </div>
-            <span class="text-xs px-2 py-1 rounded-lg bg-violet-500/20 text-violet-300 font-semibold">🖼️ Collage</span>
-          </div>
-          <div class="glass rounded-2xl p-4 flex items-center gap-3 checklist-item">
-            <span class="text-lg">✅</span>
-            <div class="flex-1">
-              <p class="text-sm font-semibold">KWH Listrik Pagi</p>
-              <p class="text-xs text-gray-500">1/1 foto · 08:20</p>
-            </div>
-            <span class="text-xs px-2 py-1 rounded-lg bg-violet-500/20 text-violet-300 font-semibold">🖼️ Collage</span>
-          </div>
-          <!-- item progress -->
-          <div class="glass rounded-2xl p-4 flex items-center gap-3 checklist-item border border-violet-500/30">
-            <span class="text-lg">⏳</span>
-            <div class="flex-1">
-              <p class="text-sm font-semibold">Store Ready</p>
-              <p class="text-xs text-gray-500">2/4 foto · 08:15 - 08:32</p>
-            </div>
-            <span class="text-xs px-2 py-1 rounded-lg bg-blue-500/20 text-blue-300 font-semibold">📸 Lanjut</span>
-          </div>
-          <!-- items pending -->
-          <div class="glass rounded-2xl p-4 flex items-center gap-3 checklist-item">
-            <span class="text-lg">⬜</span>
-            <div class="flex-1">
-              <p class="text-sm font-semibold">Kebersihan Rak</p>
-              <p class="text-xs text-gray-500">0/3 foto</p>
-            </div>
-            <span class="text-xs px-2 py-1 rounded-lg bg-white/5 text-gray-400 font-semibold">📸 Mulai</span>
-          </div>
-          <div class="glass rounded-2xl p-4 flex items-center gap-3 checklist-item">
-            <span class="text-lg">⬜</span>
-            <div class="flex-1">
-              <p class="text-sm font-semibold">Briefing Pagi</p>
-              <p class="text-xs text-gray-500">0/1 foto</p>
-            </div>
-            <span class="text-xs px-2 py-1 rounded-lg bg-white/5 text-gray-400 font-semibold">📸 Mulai</span>
-          </div>
-          <div class="glass rounded-2xl p-4 flex items-center gap-3 checklist-item">
-            <span class="text-lg">⬜</span>
-            <div class="flex-1">
-              <p class="text-sm font-semibold">Cek Expired</p>
-              <p class="text-xs text-gray-500">0/0 foto</p>
-            </div>
-            <span class="text-xs px-2 py-1 rounded-lg bg-white/5 text-gray-400 font-semibold">📸 Mulai</span>
-          </div>
-          <div class="glass rounded-2xl p-4 flex items-center gap-3 checklist-item">
-            <span class="text-lg">⬜</span>
-            <div class="flex-1">
-              <p class="text-sm font-semibold">Aktifitas Harian</p>
-              <p class="text-xs text-gray-500">0/0 foto</p>
-            </div>
-            <span class="text-xs px-2 py-1 rounded-lg bg-white/5 text-gray-400 font-semibold">📸 Mulai</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recent Activity -->
-      <div>
-        <h3 class="text-sm font-bold mb-3">🕐 Aktivitas Terakhir</h3>
-        <div class="glass rounded-2xl p-4 space-y-3">
-          <div class="flex gap-3 text-xs">
-            <span class="text-gray-500 font-mono">08:32</span>
-            <span class="text-gray-300">Upload 2 foto (Store Ready)</span>
-          </div>
-          <div class="flex gap-3 text-xs">
-            <span class="text-gray-500 font-mono">08:20</span>
-            <span class="text-gray-300">Upload 1 foto (KWH Pagi)</span>
-          </div>
-          <div class="flex gap-3 text-xs">
-            <span class="text-gray-500 font-mono">08:10</span>
-            <span class="text-gray-300">Upload 1 foto (Buka Toko)</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- CTA -->
-      <button onclick="go('camera')" class="w-full grad-primary rounded-2xl py-4 font-bold text-white glow active:scale-95 transition flex items-center justify-center gap-2">
-        📷 AMBIL FOTO CEPAT
-      </button>
     </div>
   </div>
 
-  <!-- ============ PAGE 3: CAMERA ============ -->
-  <div id="page-camera" class="page">
-    <div class="glass sticky top-0 z-30 px-5 py-4 flex items-center gap-3">
-      <button onclick="go('dashboard')" class="text-lg">←</button>
-      <div class="flex-1">
-        <p class="text-xs text-gray-400">Kategori</p>
-        <p class="font-bold text-sm">Store Ready</p>
-      </div>
-      <span id="camStatusBadge" class="text-xs px-2.5 py-1 rounded-full bg-green-500/20 text-green-400 font-semibold">🟢 Aktif</span>
-    </div>
+  <!-- UPLOAD FOTO -->
+  <div class="section">
+    <h3>📸 Foto Kegiatan <span style="font-size: 10px; color: var(--text-muted); font-weight: 400;">(klik untuk upload)</span></h3>
+    <div class="upload-grid" id="uploadGrid"></div>
+    <button class="btn btn-secondary" style="margin-top: 10px; padding: 10px; font-size: 12px;" onclick="addPhotoSlot()">
+      ➕ Tambah Slot Foto
+    </button>
+  </div>
 
-    <div class="px-5 pt-5 space-y-4">
-      <!-- Camera view -->
-      <div id="camView" class="cam-view aspect-[3/4] rounded-3xl relative overflow-hidden border border-white/10">
-        <div class="absolute inset-0 flex items-center justify-center text-gray-500 text-sm flex-col gap-2">
-          <span class="text-5xl">📷</span>
-          <span id="camViewText">Live Camera Preview</span>
-          <span class="text-xs text-gray-600">(Mockup — kamera asli tidak aktif)</span>
-        </div>
+  <!-- TEMPLATE PICKER -->
+  <div class="section">
+    <h3>🎨 Template</h3>
+    <div class="template-row" id="templateRow"></div>
+  </div>
 
-        <!-- Watermark preview -->
-        <div class="absolute bottom-4 left-4 right-4 glass rounded-2xl p-3 text-xs">
-          <div class="flex justify-between">
-            <span>📅 <span id="camDate">12/02/2026</span></span>
-            <span>🕗 <span id="camTime">--:--:--</span></span>
-          </div>
-          <div class="mt-1 text-gray-300">📍 Toko A · Store Ready</div>
-        </div>
-      </div>
-
-      <!-- Progress -->
-      <div class="flex items-center justify-between text-xs">
-        <span class="text-gray-400">Progress foto</span>
-        <span class="font-semibold"><span class="text-violet-400">2</span>/4</span>
-      </div>
-      <div class="flex gap-1.5">
-        <div class="h-1.5 flex-1 rounded-full grad-primary"></div>
-        <div class="h-1.5 flex-1 rounded-full grad-primary"></div>
-        <div class="h-1.5 flex-1 rounded-full bg-white/10"></div>
-        <div class="h-1.5 flex-1 rounded-full bg-white/10"></div>
-      </div>
-
-      <!-- Capture controls -->
-      <div class="flex items-center justify-between pt-3">
-        <button class="glass w-14 h-14 rounded-2xl flex items-center justify-center text-2xl active:scale-95 transition">🖼️</button>
-        <button onclick="capturePhoto()" class="w-20 h-20 rounded-full grad-primary glow flex items-center justify-center text-2xl active:scale-95 transition">
-          <span class="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">⚪</span>
-        </button>
-        <button class="glass w-14 h-14 rounded-2xl flex items-center justify-center text-2xl active:scale-95 transition">🔄</button>
-      </div>
-
-      <button onclick="toggleCam()" class="w-full glass rounded-2xl py-3 text-xs font-semibold active:scale-95 transition">
-        ⏻ Matikan Kamera
-      </button>
-
-      <!-- Thumbnails -->
-      <div>
-        <p class="text-xs text-gray-400 mb-2">📎 Foto diambil (2)</p>
-        <div class="flex gap-2">
-          <div class="w-16 h-16 rounded-xl photo-filled flex items-center justify-center text-2xl">🖼️</div>
-          <div class="w-16 h-16 rounded-xl photo-filled flex items-center justify-center text-2xl">🖼️</div>
-          <div class="w-16 h-16 rounded-xl photo-slot flex items-center justify-center text-xs text-gray-500">+</div>
-        </div>
-      </div>
-
-      <button onclick="go('collage')" class="w-full grad-primary rounded-2xl py-4 font-bold text-white glow active:scale-95 transition">
-        🖼️ BUAT COLLAGE
-      </button>
+  <!-- CANVAS PREVIEW -->
+  <div class="section">
+    <h3>👁️ Preview</h3>
+    <div class="canvas-wrap">
+      <canvas id="collageCanvas" width="1080" height="1080"></canvas>
+      <p class="canvas-info" id="canvasInfo">1080 × 1080 px · PNG</p>
     </div>
   </div>
 
-  <!-- ============ PAGE 4: COLLAGE EDITOR ============ -->
-  <div id="page-collage" class="page">
-    <div class="glass sticky top-0 z-30 px-5 py-4 flex items-center gap-3">
-      <button onclick="go('dashboard')" class="text-lg">←</button>
-      <div class="flex-1">
-        <p class="text-xs text-gray-400">Buat Collage</p>
-        <p class="font-bold text-sm">Store Ready</p>
-      </div>
-      <button onclick="showToast('💾 Draft tersimpan')" class="text-lg">💾</button>
-      <button onclick="go('share')" class="text-lg">📤</button>
+  <!-- ACTIONS -->
+  <div class="section">
+    <div class="btn-row" style="margin-bottom: 8px;">
+      <button class="btn btn-secondary" onclick="renderCanvas()">🔄 Refresh Preview</button>
+      <button class="btn btn-secondary" onclick="clearAllPhotos()">🗑️ Reset Foto</button>
     </div>
-
-    <div class="px-5 pt-5 space-y-4">
-      <!-- Info -->
-      <div class="glass rounded-2xl p-4 text-xs space-y-1">
-        <div class="flex items-center gap-2 text-gray-300">
-          <span>📂</span><span class="font-semibold">Store Ready</span>
-        </div>
-        <div class="text-gray-400">📅 12 Feb 2026 · 🕗 08:15 – 08:45 <span class="text-violet-400 font-semibold">(30 menit)</span></div>
-        <div class="text-gray-400">📸 4 foto</div>
-      </div>
-
-      <!-- Template picker -->
-      <div>
-        <p class="text-sm font-bold mb-3">🎨 Pilih Template</p>
-        <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-          <div class="template-card active glass rounded-xl p-2 flex-shrink-0 w-20" onclick="selectTemplate(this,'2x2')">
-            <div class="grid grid-cols-2 gap-0.5 mb-1.5">
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-            </div>
-            <p class="text-[10px] text-center font-semibold">2x2</p>
-          </div>
-          <div class="template-card glass rounded-xl p-2 flex-shrink-0 w-20" onclick="selectTemplate(this,'3x1')">
-            <div class="grid grid-cols-3 gap-0.5 mb-1.5">
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-            </div>
-            <p class="text-[10px] text-center font-semibold">3x1</p>
-          </div>
-          <div class="template-card glass rounded-xl p-2 flex-shrink-0 w-20" onclick="selectTemplate(this,'6')">
-            <div class="grid grid-cols-3 gap-0.5 mb-1.5">
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-            </div>
-            <p class="text-[10px] text-center font-semibold">6</p>
-          </div>
-          <div class="template-card glass rounded-xl p-2 flex-shrink-0 w-20" onclick="selectTemplate(this,'9')">
-            <div class="grid grid-cols-3 gap-0.5 mb-1.5">
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-              <div class="aspect-square bg-violet-400/40 rounded-sm"></div>
-            </div>
-            <p class="text-[10px] text-center font-semibold">9</p>
-          </div>
-          <div class="template-card glass rounded-xl p-2 flex-shrink-0 w-20" onclick="selectTemplate(this,'free')">
-            <div class="aspect-square flex items-center justify-center bg-violet-400/20 rounded-sm mb-1.5 text-[10px] font-bold text-violet-300">FREE</div>
-            <p class="text-[10px] text-center font-semibold">Free</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Collage preview -->
-      <div>
-        <p class="text-sm font-bold mb-3">👁️ Preview</p>
-        <div class="glass rounded-2xl p-3">
-          <!-- Header -->
-          <div class="text-center pb-2 border-b border-white/10 mb-2">
-            <p class="text-xs font-bold grad-text">🏪 TOKO A · STORE READY</p>
-            <p class="text-[10px] text-gray-400 mt-0.5">📅 12 Feb 2026 · 08:15 – 08:45</p>
-          </div>
-          <!-- Grid -->
-          <div id="collageGrid" class="grid grid-cols-2 gap-1.5">
-            <div class="aspect-square rounded-lg photo-filled flex items-end p-1.5 relative">
-              <span class="text-[9px] font-mono bg-black/60 px-1.5 py-0.5 rounded">08:15</span>
-            </div>
-            <div class="aspect-square rounded-lg photo-filled flex items-end p-1.5 relative">
-              <span class="text-[9px] font-mono bg-black/60 px-1.5 py-0.5 rounded">08:22</span>
-            </div>
-            <div class="aspect-square rounded-lg photo-filled flex items-end p-1.5 relative">
-              <span class="text-[9px] font-mono bg-black/60 px-1.5 py-0.5 rounded">08:38</span>
-            </div>
-            <div class="aspect-square rounded-lg photo-filled flex items-end p-1.5 relative">
-              <span class="text-[9px] font-mono bg-black/60 px-1.5 py-0.5 rounded">08:45</span>
-            </div>
-          </div>
-          <!-- Footer -->
-          <div class="text-center pt-2 border-t border-white/10 mt-2">
-            <p class="text-[10px] text-gray-400">Budi · Shift Pagi · 4 foto · <span class="text-violet-400">30 menit</span></p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Photo sources -->
-      <div>
-        <p class="text-xs text-gray-400 mb-2">🖼️ Foto tersedia (drag & drop di versi asli)</p>
-        <div class="flex gap-2 overflow-x-auto no-scrollbar">
-          <div class="w-16 h-16 flex-shrink-0 rounded-xl photo-filled flex items-center justify-center text-xl cursor-pointer active:scale-95 transition">🖼️</div>
-          <div class="w-16 h-16 flex-shrink-0 rounded-xl photo-filled flex items-center justify-center text-xl cursor-pointer active:scale-95 transition">🖼️</div>
-          <div class="w-16 h-16 flex-shrink-0 rounded-xl photo-filled flex items-center justify-center text-xl cursor-pointer active:scale-95 transition">🖼️</div>
-          <div class="w-16 h-16 flex-shrink-0 rounded-xl photo-filled flex items-center justify-center text-xl cursor-pointer active:scale-95 transition">🖼️</div>
-        </div>
-      </div>
-
-      <button onclick="go('share')" class="w-full grad-primary rounded-2xl py-4 font-bold text-white glow active:scale-95 transition">
-        📤 SIMPAN & SHARE
-      </button>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="downloadPNG()">⬇️ Download PNG</button>
+      <button class="btn btn-primary" onclick="shareCollage()">📤 Share</button>
     </div>
   </div>
 
-  <!-- ============ PAGE 5: SHARE MODAL ============ -->
-  <div id="page-share" class="page">
-    <div class="glass sticky top-0 z-30 px-5 py-4 flex items-center gap-3">
-      <button onclick="go('collage')" class="text-lg">✕</button>
-      <p class="font-bold text-sm flex-1 text-center">Bagikan Collage</p>
-      <span class="w-6"></span>
-    </div>
-
-    <div class="px-5 pt-5 space-y-4">
-      <!-- Preview -->
-      <div class="glass rounded-2xl p-3">
-        <div class="aspect-square rounded-xl photo-filled flex items-center justify-center text-5xl">
-          🖼️
-        </div>
-        <p class="text-xs text-center text-gray-400 mt-2">Collage Preview · 1080×1080 PNG</p>
-      </div>
-
-      <!-- Success -->
-      <div class="glass rounded-2xl p-4 flex items-center gap-3 border border-green-500/30 bg-green-500/5">
-        <span class="text-xl">✅</span>
-        <div class="flex-1">
-          <p class="text-xs font-semibold text-green-400">Collage tersimpan di cloud</p>
-          <p class="text-[10px] text-gray-400 mt-0.5 truncate">https://cdn.tokocollage.app/xxx.png</p>
-        </div>
-        <button onclick="showToast('📋 Link disalin!')" class="text-lg">📋</button>
-      </div>
-
-      <!-- Share options -->
-      <div>
-        <p class="text-xs text-gray-400 text-center mb-3">──────── Bagikan ke ────────</p>
-        <div class="grid grid-cols-3 gap-3">
-          <button onclick="shareWA('japri')" class="glass rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-95 transition">
-            <span class="text-2xl">💬</span>
-            <span class="text-[10px] font-semibold text-center">WhatsApp<br/>Japri</span>
-          </button>
-          <button onclick="shareWA('grup')" class="glass rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-95 transition">
-            <span class="text-2xl">👥</span>
-            <span class="text-[10px] font-semibold text-center">Grup WA</span>
-          </button>
-          <button onclick="showToast('📧 Membuka email...')" class="glass rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-95 transition">
-            <span class="text-2xl">📧</span>
-            <span class="text-[10px] font-semibold text-center">Email</span>
-          </button>
-          <button onclick="showToast('📱 Membuka Telegram...')" class="glass rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-95 transition">
-            <span class="text-2xl">📱</span>
-            <span class="text-[10px] font-semibold text-center">Telegram</span>
-          </button>
-          <button onclick="showToast('☁️ Upload ke Drive...')" class="glass rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-95 transition">
-            <span class="text-2xl">☁️</span>
-            <span class="text-[10px] font-semibold text-center">Drive</span>
-          </button>
-          <button onclick="showToast('📋 Link disalin!')" class="glass rounded-2xl p-4 flex flex-col items-center gap-2 active:scale-95 transition">
-            <span class="text-2xl">🔗</span>
-            <span class="text-[10px] font-semibold text-center">Copy URL</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Catatan -->
-      <div>
-        <p class="text-xs text-gray-400 mb-2">Catatan (opsional)</p>
-        <textarea rows="2" placeholder="Tulis keterangan..." class="w-full glass rounded-2xl p-3 text-sm outline-none focus:border-violet-500/50 transition resize-none"></textarea>
-      </div>
-
-      <button onclick="showToast('📤 Membuka WhatsApp...')" class="w-full grad-primary rounded-2xl py-4 font-bold text-white glow active:scale-95 transition">
-        📤 BAGIKAN SEKARANG
-      </button>
+  <!-- HINT -->
+  <div class="section">
+    <div class="empty-hint">
+      💡 Klik slot kosong untuk upload foto.<br/>
+      Timestamp otomatis dari waktu upload — bisa edit manual di preview.
     </div>
   </div>
 
-  <!-- ============ BOTTOM NAV ============ -->
-  <div id="bottomNav" class="hidden fixed bottom-0 left-0 right-0 max-w-md mx-auto glass border-t border-white/10 px-4 py-2 z-30">
-    <div class="flex justify-around">
-      <button onclick="go('dashboard')" class="nav-btn flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl transition" data-page="dashboard">
-        <span class="text-xl">🏠</span>
-        <span class="text-[10px] font-semibold">Home</span>
-      </button>
-      <button onclick="go('collage')" class="nav-btn flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl transition" data-page="collage">
-        <span class="text-xl">🖼️</span>
-        <span class="text-[10px] font-semibold">Collage</span>
-      </button>
-      <button onclick="showToast('📁 Riwayat segera hadir')" class="nav-btn flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl transition">
-        <span class="text-xl">📁</span>
-        <span class="text-[10px] font-semibold">Riwayat</span>
-      </button>
-      <button onclick="showToast('⚙️ Setting segera hadir')" class="nav-btn flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl transition">
-        <span class="text-xl">⚙️</span>
-        <span class="text-[10px] font-semibold">Setting</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- ============ TOAST ============ -->
-  <div id="toast" class="toast glass rounded-2xl px-5 py-3 text-sm font-semibold"></div>
 </div>
 
-<!-- ================= SCRIPTS ================= -->
+<div id="toast" class="toast"></div>
+
 <script>
-  let camOn = true;
-  let currentPage = 'login';
+/* =====================================================================
+   STATE
+===================================================================== */
+const state = {
+  photos: [],        // { file, url, timestamp, imgEl }
+  template: '2x2',
+  maxSlots: 4,
+};
 
-  function go(page) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-' + page).classList.add('active');
-    currentPage = page;
+const TEMPLATES = {
+  '1':   { cols: 1, rows: 1, label: '1' },
+  '2x2': { cols: 2, rows: 2, label: '2x2' },
+  '3x1': { cols: 3, rows: 1, label: '3x1' },
+  '6':   { cols: 3, rows: 2, label: '6' },
+  '9':   { cols: 3, rows: 3, label: '9' },
+};
 
-    // show/hide bottom nav
-    const nav = document.getElementById('bottomNav');
-    if (['login'].includes(page)) {
-      nav.classList.add('hidden');
-    } else {
-      nav.classList.remove('hidden');
+/* =====================================================================
+   THEME
+===================================================================== */
+const THEME_KEY = 'toko-collage-theme';
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const el = document.getElementById('themeIcon');
+  if (el) el.textContent = theme === 'dark' ? '🌙' : '☀️';
+  localStorage.setItem(THEME_KEY, theme);
+}
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  const el = document.getElementById('themeIcon');
+  if (el) { el.classList.add('theme-spin'); setTimeout(() => el.classList.remove('theme-spin'), 400); }
+  applyTheme(next);
+  renderCanvas();
+}
+
+/* =====================================================================
+   TOAST
+===================================================================== */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._tt);
+  window._tt = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+/* =====================================================================
+   TEMPLATE PICKER
+===================================================================== */
+function renderTemplates() {
+  const row = document.getElementById('templateRow');
+  row.innerHTML = '';
+  Object.entries(TEMPLATES).forEach(([key, tpl]) => {
+    const card = document.createElement('div');
+    card.className = 'tpl-card' + (state.template === key ? ' active' : '');
+    card.onclick = () => selectTemplate(key);
+    const preview = document.createElement('div');
+    preview.className = 'tpl-preview';
+    preview.style.gridTemplateColumns = `repeat(${tpl.cols}, 1fr)`;
+    preview.style.gridTemplateRows = `repeat(${tpl.rows}, 1fr)`;
+    for (let i = 0; i < tpl.cols * tpl.rows; i++) {
+      preview.appendChild(document.createElement('div'));
     }
-
-    // highlight nav
-    document.querySelectorAll('.nav-btn').forEach(b => {
-      b.classList.remove('bg-violet-500/20', 'text-violet-300');
-      b.classList.add('text-gray-400');
-      if (b.dataset.page === page) {
-        b.classList.add('bg-violet-500/20', 'text-violet-300');
-        b.classList.remove('text-gray-400');
-      }
-    });
-
-    // scroll top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  function toggleUserMenu() {
-    document.getElementById('userMenu').classList.toggle('hidden');
-  }
-
-  function toggleCam() {
-    camOn = !camOn;
-    const dot = document.getElementById('camStatusDot');
-    const txt = document.getElementById('camStatusText');
-    const badge = document.getElementById('camStatusBadge');
-    const view = document.getElementById('camViewText');
-
-    if (camOn) {
-      dot.className = 'w-2 h-2 rounded-full bg-green-400 pulse-dot';
-      txt.className = 'text-green-400 font-semibold';
-      txt.textContent = 'Aktif';
-      badge.className = 'text-xs px-2.5 py-1 rounded-full bg-green-500/20 text-green-400 font-semibold';
-      badge.textContent = '🟢 Aktif';
-      view.textContent = 'Live Camera Preview';
-      showToast('🟢 Kamera diaktifkan');
-    } else {
-      dot.className = 'w-2 h-2 rounded-full bg-red-400';
-      txt.className = 'text-red-400 font-semibold';
-      txt.textContent = 'Nonaktif';
-      badge.className = 'text-xs px-2.5 py-1 rounded-full bg-red-500/20 text-red-400 font-semibold';
-      badge.textContent = '🔴 Nonaktif';
-      view.textContent = 'Kamera dimatikan';
-      showToast('🔴 Kamera dimatikan');
-    }
-  }
-
-  function capturePhoto() {
-    const view = document.getElementById('camView');
-    view.classList.add('flash');
-    setTimeout(() => view.classList.remove('flash'), 300);
-    showToast('📸 Foto diambil & di-upload ke cloud');
-  }
-
-  function selectTemplate(el, name) {
-    document.querySelectorAll('.template-card').forEach(c => c.classList.remove('active'));
-    el.classList.add('active');
-    showToast('🎨 Template: ' + name);
-  }
-
-  function shareWA(type) {
-    if (type === 'japri') {
-      showToast('💬 Membuka WhatsApp Japri...');
-    } else {
-      showToast('👥 Pilih grup WA untuk share...');
-    }
-  }
-
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    clearTimeout(window._toastTimer);
-    window._toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
-  }
-
-  // Live clock (dashboard + camera)
-  function updateClock() {
-    const now = new Date();
-    const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-    const time = now.toTimeString().slice(0,8);
-
-    const d = document.getElementById('liveClock');
-    if (d) d.textContent = `📅 ${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()} · 🕗 ${time}`;
-
-    const cd = document.getElementById('camDate');
-    const ct = document.getElementById('camTime');
-    if (cd) cd.textContent = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
-    if (ct) ct.textContent = time;
-  }
-  setInterval(updateClock, 1000);
-  updateClock();
-
-  // Close user menu when clicking outside
-  document.addEventListener('click', (e) => {
-    const menu = document.getElementById('userMenu');
-    if (!menu.classList.contains('hidden') && !e.target.closest('button[onclick="toggleUserMenu()"]') && !menu.contains(e.target)) {
-      menu.classList.add('hidden');
-    }
+    card.appendChild(preview);
+    const p = document.createElement('p');
+    p.textContent = tpl.label;
+    card.appendChild(p);
+    row.appendChild(card);
   });
+}
+
+function selectTemplate(key) {
+  state.template = key;
+  const tpl = TEMPLATES[key];
+  state.maxSlots = tpl.cols * tpl.rows;
+  renderTemplates();
+  renderUploadGrid();
+  renderCanvas();
+  showToast('🎨 Template: ' + tpl.label);
+}
+
+/* =====================================================================
+   UPLOAD GRID
+===================================================================== */
+function renderUploadGrid() {
+  const grid = document.getElementById('uploadGrid');
+  grid.innerHTML = '';
+  for (let i = 0; i < state.maxSlots; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'upload-slot';
+    const photo = state.photos[i];
+
+    if (photo) {
+      const img = document.createElement('img');
+      img.src = photo.url;
+      slot.appendChild(img);
+
+      const ts = document.createElement('div');
+      ts.className = 'ts-badge';
+      ts.textContent = photo.timestamp;
+      slot.appendChild(ts);
+
+      const rm = document.createElement('button');
+      rm.className = 'remove-btn';
+      rm.textContent = '✕';
+      rm.onclick = (e) => { e.stopPropagation(); removePhoto(i); };
+      slot.appendChild(rm);
+    } else {
+      const plus = document.createElement('div');
+      plus.className = 'plus';
+      plus.textContent = '➕';
+      slot.appendChild(plus);
+
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.capture = 'environment';
+      input.onchange = (e) => handleFileUpload(e, i);
+      slot.appendChild(input);
+
+      slot.onclick = () => input.click();
+    }
+    grid.appendChild(slot);
+  }
+}
+
+function addPhotoSlot() {
+  // Naikkan maxSlots (maks 9)
+  if (state.maxSlots >= 9) {
+    showToast('⚠️ Maksimal 9 foto');
+    return;
+  }
+  // Cari template yang cocok
+  if (state.maxSlots === 4) selectTemplate('6');
+  else if (state.maxSlots === 6) selectTemplate('9');
+  else state.maxSlots = Math.min(9, state.maxSlots + 1);
+  renderUploadGrid();
+  renderCanvas();
+}
+
+function handleFileUpload(e, index) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const now = new Date();
+  const ts = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const url = ev.target.result;
+    const imgEl = new Image();
+    imgEl.onload = () => {
+      state.photos[index] = { file, url, timestamp: ts, imgEl };
+      renderUploadGrid();
+      renderCanvas();
+      showToast('📸 Foto ditambahkan (' + ts + ')');
+    };
+    imgEl.src = url;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto(index) {
+  state.photos.splice(index, 1);
+  renderUploadGrid();
+  renderCanvas();
+  showToast('🗑️ Foto dihapus');
+}
+
+function clearAllPhotos() {
+  if (state.photos.length === 0) return;
+  if (!confirm('Hapus semua foto?')) return;
+  state.photos = [];
+  renderUploadGrid();
+  renderCanvas();
+  showToast('🗑️ Semua foto dihapus');
+}
+
+/* =====================================================================
+   CANVAS RENDERER
+===================================================================== */
+async function renderCanvas() {
+  // Pastikan font sudah siap
+  if (document.fonts && document.fonts.ready) {
+    await document.fonts.ready;
+  }
+
+  const canvas = document.getElementById('collageCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = 1080, H = 1080;
+
+  // ==== BACKGROUND ====
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+  if (isDark) {
+    bgGrad.addColorStop(0, '#0f0f1a');
+    bgGrad.addColorStop(1, '#1a1a2e');
+  } else {
+    bgGrad.addColorStop(0, '#f8f9fc');
+    bgGrad.addColorStop(1, '#eef0f7');
+  }
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // ==== HEADER ====
+  const padding = 60;
+  const headerH = 130;
+  const textColor = isDark ? '#e5e7eb' : '#1a1a2e';
+  const mutedColor = isDark ? '#9ca3af' : '#6b7280';
+
+  // Logo box
+  const logoSize = 60;
+  const logoX = padding;
+  const logoY = padding;
+
+  // Gradient logo box
+  const logoGrad = ctx.createLinearGradient(logoX, logoY, logoX + logoSize, logoY + logoSize);
+  logoGrad.addColorStop(0, '#7C3AED');
+  logoGrad.addColorStop(1, '#3B82F6');
+  ctx.fillStyle = logoGrad;
+  roundRect(ctx, logoX, logoY, logoSize, logoSize, 16);
+  ctx.fill();
+
+  // Emoji toko
+  ctx.font = '32px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#fff';
+  ctx.fillText('🏪', logoX + logoSize/2, logoY + logoSize/2 + 2);
+
+  // Judul outlet
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  const outlet = (document.getElementById('metaOutlet').value || 'Toko').toUpperCase();
+  ctx.font = '800 32px "Plus Jakarta Sans", sans-serif';
+  ctx.fillStyle = textColor;
+  ctx.fillText(outlet, logoX + logoSize + 20, logoY + 4);
+
+  // Sub-judul
+  const kategori = document.getElementById('metaKategori').value;
+  ctx.font = '600 22px "Plus Jakarta Sans", sans-serif';
+  ctx.fillStyle = '#a78bfa';
+  ctx.fillText(kategori, logoX + logoSize + 20, logoY + 40);
+
+  // ==== INFO BAR (tanggal & waktu) ====
+  const now = new Date();
+  const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+
+  // Rentang waktu dari foto
+  const times = state.photos.filter(p => p).map(p => p.timestamp).sort();
+  let timeRange = '--:--';
+  let durationStr = '0 menit';
+  if (times.length > 0) {
+    const first = times[0];
+    const last = times[times.length - 1];
+    timeRange = `${first} – ${last}`;
+    // hitung durasi
+    const [h1, m1] = first.split(':').map(Number);
+    const [h2, m2] = last.split(':').map(Number);
+    let diffMin = (h2 * 60 + m2) - (h1 * 60 + m1);
+    if (diffMin < 0) diffMin += 24 * 60; // handle lewat tengah malam
+    const h = Math.floor(diffMin / 60);
+    const m = diffMin % 60;
+    durationStr = h > 0 ? `${h}j ${m}m` : `${m} menit`;
+  }
+
+  // Info line bawah judul
+  ctx.font = '500 18px "Plus Jakarta Sans", sans-serif';
+  ctx.fillStyle = mutedColor;
+  ctx.fillText(`📅 ${dateStr}`, logoX + logoSize + 20, logoY + 78);
+
+  // ==== GRID FOTO ====
+  const tpl = TEMPLATES[state.template];
+  const cols = tpl.cols;
+  const rows = tpl.rows;
+  const gridTop = headerH + padding;
+  const footerH = 100;
+  const gridBottom = H - footerH - padding;
+  const gridLeft = padding;
+  const gridRight = W - padding;
+  const gridW = gridRight - gridLeft;
+  const gridH = gridBottom - gridTop;
+  const gap = 12;
+
+  const cellW = (gridW - gap * (cols - 1)) / cols;
+  const cellH = (gridH - gap * (rows - 1)) / rows;
+
+  const photoIndexMax = Math.min(state.photos.filter(p => p).length, cols * rows);
+  const filledPhotos = state.photos.filter(p => p).slice(0, cols * rows);
+
+  for (let i = 0; i < cols * rows; i++) {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = gridLeft + col * (cellW + gap);
+    const y = gridTop + row * (cellH + gap);
+
+    // Slot background
+    ctx.fillStyle = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
+    roundRect(ctx, x, y, cellW, cellH, 16);
+    ctx.fill();
+
+    // Border dashed
+    ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 6]);
+    roundRect(ctx, x, y, cellW, cellH, 16);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const photo = filledPhotos[i];
+    if (photo && photo.imgEl && photo.imgEl.complete) {
+      drawImageCover(ctx, photo.imgEl, x, y, cellW, cellH, 16);
+
+      // Timestamp badge
+      const badgeText = photo.timestamp;
+      ctx.font = '600 16px "Plus Jakarta Sans", sans-serif';
+      const badgeW = ctx.measureText(badgeText).width + 20;
+      const badgeH = 28;
+      const bx = x + 12;
+      const by = y + cellH - badgeH - 12;
+
+      ctx.fillStyle = 'rgba(0,0,0,0.75)';
+      roundRect(ctx, bx, by, badgeW, badgeH, 8);
+      ctx.fill();
+
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(badgeText, bx + 10, by + badgeH/2 + 1);
+    } else {
+      // Nomor slot
+      ctx.fillStyle = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)';
+      ctx.font = '700 40px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(i + 1), x + cellW/2, y + cellH/2);
+    }
+  }
+
+  // ==== FOOTER ====
+  const footerY = H - padding - 40;
+  const nama = document.getElementById('metaNama').value || '-';
+  const shift = document.getElementById('metaShift').value;
+  const totalFoto = filledPhotos.length;
+
+  // Footer divider
+  ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padding, footerY - 20);
+  ctx.lineTo(W - padding, footerY - 20);
+  ctx.stroke();
+
+  // Footer info kiri
+  ctx.fillStyle = textColor;
+  ctx.font = '600 18px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`${nama} · ${shift}`, padding, footerY);
+
+  ctx.fillStyle = mutedColor;
+  ctx.font = '500 15px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(`${totalFoto} foto · ${timeRange} · ${durationStr}`, padding, footerY + 24);
+
+  // Footer kanan (branding)
+  ctx.textAlign = 'right';
+  ctx.fillStyle = mutedColor;
+  ctx.font = '600 14px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText('Toko Collage', W - padding, footerY + 10);
+  ctx.font = '500 12px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText('Daily Activity Documentation', W - padding, footerY + 28);
+
+  // Update info canvas
+  document.getElementById('canvasInfo').textContent = `${W} × ${H} px · PNG · ${totalFoto} foto`;
+}
+
+/* =====================================================================
+   HELPERS
+===================================================================== */
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawImageCover(ctx, img, x, y, w, h, r) {
+  ctx.save();
+  roundRect(ctx, x, y, w, h, r);
+  ctx.clip();
+
+  const imgRatio = img.width / img.height;
+  const slotRatio = w / h;
+  let sx, sy, sw, sh;
+  if (imgRatio > slotRatio) {
+    // gambar lebih lebar → crop kiri kanan
+    sh = img.height;
+    sw = sh * slotRatio;
+    sx = (img.width - sw) / 2;
+    sy = 0;
+  } else {
+    // gambar lebih tinggi → crop atas bawah
+    sw = img.width;
+    sh = sw / slotRatio;
+    sx = 0;
+    sy = (img.height - sh) / 2;
+  }
+  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+  ctx.restore();
+}
+
+/* =====================================================================
+   EXPORT / SHARE
+===================================================================== */
+function canvasToBlob() {
+  return new Promise((resolve) => {
+    document.getElementById('collageCanvas').toBlob((blob) => resolve(blob), 'image/png', 0.95);
+  });
+}
+
+async function downloadPNG() {
+  const blob = await canvasToBlob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const now = new Date();
+  const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+  const kategori = document.getElementById('metaKategori').value.replace(/\s+/g, '-');
+  a.download = `collage-${kategori}-${stamp}.png`;
+  a.href = url;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast('⬇️ PNG berhasil di-download');
+}
+
+async function shareCollage() {
+  const blob = await canvasToBlob();
+
+  // Cek Web Share API support
+  if (navigator.canShare && navigator.canShare({ files: [new File([blob], 'x.png', { type: 'image/png' })] })) {
+    const now = new Date();
+    const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+    const kategori = document.getElementById('metaKategori').value.replace(/\s+/g, '-');
+    const file = new File([blob], `collage-${kategori}-${stamp}.png`, { type: 'image/png' });
+
+    const kategoriText = document.getElementById('metaKategori').value;
+    const outletText = document.getElementById('metaOutlet').value;
+
+    try {
+      await navigator.share({
+        files: [file],
+        title: `Collage ${kategoriText}`,
+        text: `📸 Collage ${kategoriText} - ${outletText}\n📅 ${now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`,
+      });
+      showToast('✅ Berhasil di-share');
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        showToast('⚠️ Gagal share, coba Download saja');
+      }
+    }
+  } else {
+    showToast('📱 Share tidak didukung → pakai Download');
+    downloadPNG();
+  }
+}
+
+/* =====================================================================
+   INIT
+===================================================================== */
+(function init() {
+  // Apply theme
+  const savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
+  applyTheme(savedTheme);
+
+  // Render template & upload
+  renderTemplates();
+  renderUploadGrid();
+
+  // Trigger render awal
+  setTimeout(() => renderCanvas(), 100);
+
+  // Live update meta
+  ['metaOutlet','metaKategori','metaNama','metaShift'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => renderCanvas());
+    el.addEventListener('change', () => renderCanvas());
+  });
+})();
 </script>
 
 </body>
