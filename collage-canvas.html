@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Toko Collage · Canvas Renderer</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg-soft: rgba(255,255,255,0.04);
+    --bg-card: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.08);
+    --text: #e5e7eb;
+    --text-muted: #9ca3af;
+    --text-dim: #6b7280;
+    --slot-bg: repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0 10px, rgba(255,255,255,0.06) 10px 20px);
+  }
+  [data-theme="light"] {
+    --bg: #f4f5fa;
+    --bg-soft: rgba(255,255,255,0.85);
+    --bg-card: rgba(255,255,255,0.95);
+    --border: rgba(0,0,0,0.08);
+    --text: #1a1a2e;
+    --text-muted: #4b5563;
+    --text-dim: #6b7280;
+    --slot-bg: repeating-linear-gradient(45deg, rgba(0,0,0,0.02) 0 10px, rgba(0,0,0,0.05) 10px 20px);
+  }
+  * { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); margin: 0; overflow-x: hidden; transition: background .25s, color .25s; }
+  .app { max-width: 480px; margin: 0 auto; min-height: 100vh; padding-bottom: 30px; }
+
+  .glass {
+    background: var(--bg-soft);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+  }
+  .grad-primary { background: linear-gradient(135deg, #7C3AED 0%, #3B82F6 100%); }
+  .grad-text {
+    background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .glow { box-shadow: 0 0 30px rgba(124, 58, 237, 0.35); }
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
+    opacity: 0; transition: all .3s ease; pointer-events: none; z-index: 100;
+    padding: 12px 22px; border-radius: 16px; font-size: 13px; font-weight: 600;
+    background: rgba(20,20,30,0.95); color: #fff; border: 1px solid rgba(255,255,255,0.1);
+    max-width: 90%; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .header {
+    padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 30;
+  }
+  .header .logo {
+    width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .header h1 { font-size: 14px; font-weight: 700; margin: 0; }
+  .header p { font-size: 11px; color: var(--text-muted); margin: 0; }
+
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: var(--bg-soft); border: 1px solid var(--border); cursor: pointer; font-size: 15px;
+    transition: transform .15s;
+  }
+  .icon-btn:active { transform: scale(0.92); }
+
+  .section { padding: 0 20px; margin-bottom: 18px; }
+  .section h3 { font-size: 13px; font-weight: 700; margin: 0 0 10px; display: flex; align-items: center; gap: 6px; }
+
+  .field {
+    background: var(--bg-soft); border: 1px solid var(--border); border-radius: 14px;
+    padding: 10px 14px; display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+  }
+  .field label { font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 2px; }
+  .field input, .field select {
+    background: transparent; border: none; outline: none; width: 100%;
+    font-size: 13px; color: var(--text); font-family: inherit; font-weight: 500;
+  }
+  .field select option { background: var(--bg); color: var(--text); }
+
+  /* Upload grid */
+  .upload-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  }
+  .upload-slot {
+    aspect-ratio: 1; border-radius: 12px; background: var(--slot-bg);
+    border: 1.5px dashed var(--border); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; position: relative; overflow: hidden;
+    transition: all .2s;
+  }
+  .upload-slot:hover { border-color: #7C3AED; }
+  .upload-slot img {
+    width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0;
+  }
+  .upload-slot .plus { font-size: 22px; color: var(--text-dim); }
+  .upload-slot .ts-badge {
+    position: absolute; bottom: 4px; left: 4px; font-size: 9px; font-family: monospace;
+    background: rgba(0,0,0,0.7); color: #fff; padding: 2px 5px; border-radius: 4px; z-index: 2;
+  }
+  .upload-slot .remove-btn {
+    position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(239,68,68,0.9); color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; z-index: 3; cursor: pointer; border: none;
+  }
+  .upload-slot input[type=file] { display: none; }
+
+  /* Template picker */
+  .template-row {
+    display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .template-row::-webkit-scrollbar { display: none; }
+  .tpl-card {
+    flex-shrink: 0; width: 76px; padding: 8px; border-radius: 12px;
+    background: var(--bg-soft); border: 1px solid var(--border); cursor: pointer;
+    transition: all .2s;
+  }
+  .tpl-card.active {
+    border-color: #7C3AED; background: rgba(124,58,237,0.15);
+    box-shadow: 0 0 0 1px #7C3AED inset;
+  }
+  .tpl-card p { font-size: 10px; text-align: center; margin: 6px 0 0; font-weight: 600; }
+  .tpl-preview { display: grid; gap: 2px; aspect-ratio: 1; }
+  .tpl-preview div { background: rgba(167,139,250,0.4); border-radius: 2px; }
+
+  /* Canvas wrapper */
+  .canvas-wrap {
+    background: var(--bg-soft); border: 1px solid var(--border); border-radius: 18px;
+    padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  #collageCanvas {
+    width: 100%; max-width: 400px; height: auto; border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    background: #1a1a2e;
+  }
+  .canvas-info { font-size: 11px; color: var(--text-muted); text-align: center; }
+
+  /* Action buttons */
+  .btn {
+    width: 100%; padding: 15px; border-radius: 16px; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 700; font-family: inherit; transition: transform .15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: linear-gradient(135deg, #7C3AED 0%, #3B82F6 100%); color: #fff; }
+  .btn-secondary { background: var(--bg-soft); border: 1px solid var(--border); color: var(--text); }
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* Theme icon */
+  #themeIcon { display: inline-block; transition: transform .4s ease; }
+  .theme-spin { transform: rotate(360deg); }
+
+  /* Empty state di canvas */
+  .empty-hint {
+    font-size: 11px; color: var(--text-dim); text-align: center; padding: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header glass">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div class="logo grad-primary">🖼️</div>
+      <div>
+        <h1>Collage Builder</h1>
+        <p>Canvas Renderer · v2.0</p>
+      </div>
+    </div>
+    <button class="icon-btn" onclick="toggleTheme()">
+      <span id="themeIcon">🌙</span>
+    </button>
+  </div>
+
+  <!-- INFO KEGIATAN -->
+  <div class="section" style="margin-top: 16px;">
+    <h3>📋 Info Kegiatan</h3>
+    <div class="field">
+      <span>🏪</span>
+      <div style="flex: 1;">
+        <label>Outlet</label>
+        <input id="metaOutlet" type="text" value="Toko A - Jakarta Selatan" />
+      </div>
+    </div>
+    <div class="field">
+      <span>📂</span>
+      <div style="flex: 1;">
+        <label>Kategori Kegiatan</label>
+        <select id="metaKategori">
+          <option>Buka Toko</option>
+          <option selected>Store Ready</option>
+          <option>KWH Listrik Pagi</option>
+          <option>Kebersihan Rak</option>
+          <option>Briefing Pagi</option>
+          <option>Cek Expired</option>
+          <option>Aktifitas Harian</option>
+          <option>Serah Terima Tugas</option>
+          <option>Briefing Siang</option>
+          <option>Implementasi Promo</option>
+          <option>KWH Listrik Malam</option>
+          <option>Closing</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <span>👤</span>
+      <div style="flex: 1;">
+        <label>Nama Crew</label>
+        <input id="metaNama" type="text" value="Budi Santoso" />
+      </div>
+    </div>
+    <div class="field">
+      <span>🕐</span>
+      <div style="flex: 1;">
+        <label>Shift</label>
+        <select id="metaShift">
+          <option selected>Shift Pagi</option>
+          <option>Shift Siang</option>
+          <option>Shift Malam</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPLOAD FOTO -->
+  <div class="section">
+    <h3>📸 Foto Kegiatan <span style="font-size: 10px; color: var(--text-muted); font-weight: 400;">(klik untuk upload)</span></h3>
+    <div class="upload-grid" id="uploadGrid"></div>
+    <button class="btn btn-secondary" style="margin-top: 10px; padding: 10px; font-size: 12px;" onclick="addPhotoSlot()">
+      ➕ Tambah Slot Foto
+    </button>
+  </div>
+
+  <!-- TEMPLATE PICKER -->
+  <div class="section">
+    <h3>🎨 Template</h3>
+    <div class="template-row" id="templateRow"></div>
+  </div>
+
+  <!-- CANVAS PREVIEW -->
+  <div class="section">
+    <h3>👁️ Preview</h3>
+    <div class="canvas-wrap">
+      <canvas id="collageCanvas" width="1080" height="1080"></canvas>
+      <p class="canvas-info" id="canvasInfo">1080 × 1080 px · PNG</p>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="section">
+    <div class="btn-row" style="margin-bottom: 8px;">
+      <button class="btn btn-secondary" onclick="renderCanvas()">🔄 Refresh Preview</button>
+      <button class="btn btn-secondary" onclick="clearAllPhotos()">🗑️ Reset Foto</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="downloadPNG()">⬇️ Download PNG</button>
+      <button class="btn btn-primary" onclick="shareCollage()">📤 Share</button>
+    </div>
+  </div>
+
+  <!-- HINT -->
+  <div class="section">
+    <div class="empty-hint">
+      💡 Klik slot kosong untuk upload foto.<br/>
+      Timestamp otomatis dari waktu upload — bisa edit manual di preview.
+    </div>
+  </div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* =====================================================================
+   STATE
+===================================================================== */
+const state = {
+  photos: [],        // { file, url, timestamp, imgEl }
+  template: '2x2',
+  maxSlots: 4,
+};
+
+const TEMPLATES = {
+  '1':   { cols: 1, rows: 1, label: '1' },
+  '2x2': { cols: 2, rows: 2, label: '2x2' },
+  '3x1': { cols: 3, rows: 1, label: '3x1' },
+  '6':   { cols: 3, rows: 2, label: '6' },
+  '9':   { cols: 3, rows: 3, label: '9' },
+};
+
+/* =====================================================================
+   THEME
+===================================================================== */
+const THEME_KEY = 'toko-collage-theme';
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const el = document.getElementById('themeIcon');
+  if (el) el.textContent = theme === 'dark' ? '🌙' : '☀️';
+  localStorage.setItem(THEME_KEY, theme);
+}
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  const el = document.getElementById('themeIcon');
+  if (el) { el.classList.add('theme-spin'); setTimeout(() => el.classList.remove('theme-spin'), 400); }
+  applyTheme(next);
+  renderCanvas();
+}
+
+/* =====================================================================
+   TOAST
+===================================================================== */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._tt);
+  window._tt = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+/* =====================================================================
+   TEMPLATE PICKER
+===================================================================== */
+function renderTemplates() {
+  const row = document.getElementById('templateRow');
+  row.innerHTML = '';
+  Object.entries(TEMPLATES).forEach(([key, tpl]) => {
+    const card = document.createElement('div');
+    card.className = 'tpl-card' + (state.template === key ? ' active' : '');
+    card.onclick = () => selectTemplate(key);
+    const preview = document.createElement('div');
+    preview.className = 'tpl-preview';
+    preview.style.gridTemplateColumns = `repeat(${tpl.cols}, 1fr)`;
+    preview.style.gridTemplateRows = `repeat(${tpl.rows}, 1fr)`;
+    for (let i = 0; i < tpl.cols * tpl.rows; i++) {
+      preview.appendChild(document.createElement('div'));
+    }
+    card.appendChild(preview);
+    const p = document.createElement('p');
+    p.textContent = tpl.label;
+    card.appendChild(p);
+    row.appendChild(card);
+  });
+}
+
+function selectTemplate(key) {
+  state.template = key;
+  const tpl = TEMPLATES[key];
+  state.maxSlots = tpl.cols * tpl.rows;
+  renderTemplates();
+  renderUploadGrid();
+  renderCanvas();
+  showToast('🎨 Template: ' + tpl.label);
+}
+
+/* =====================================================================
+   UPLOAD GRID
+===================================================================== */
+function renderUploadGrid() {
+  const grid = document.getElementById('uploadGrid');
+  grid.innerHTML = '';
+  for (let i = 0; i < state.maxSlots; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'upload-slot';
+    const photo = state.photos[i];
+
+    if (photo) {
+      const img = document.createElement('img');
+      img.src = photo.url;
+      slot.appendChild(img);
+
+      const ts = document.createElement('div');
+      ts.className = 'ts-badge';
+      ts.textContent = photo.timestamp;
+      slot.appendChild(ts);
+
+      const rm = document.createElement('button');
+      rm.className = 'remove-btn';
+      rm.textContent = '✕';
+      rm.onclick = (e) => { e.stopPropagation(); removePhoto(i); };
+      slot.appendChild(rm);
+    } else {
+      const plus = document.createElement('div');
+      plus.className = 'plus';
+      plus.textContent = '➕';
+      slot.appendChild(plus);
+
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.capture = 'environment';
+      input.onchange = (e) => handleFileUpload(e, i);
+      slot.appendChild(input);
+
+      slot.onclick = () => input.click();
+    }
+    grid.appendChild(slot);
+  }
+}
+
+function addPhotoSlot() {
+  // Naikkan maxSlots (maks 9)
+  if (state.maxSlots >= 9) {
+    showToast('⚠️ Maksimal 9 foto');
+    return;
+  }
+  // Cari template yang cocok
+  if (state.maxSlots === 4) selectTemplate('6');
+  else if (state.maxSlots === 6) selectTemplate('9');
+  else state.maxSlots = Math.min(9, state.maxSlots + 1);
+  renderUploadGrid();
+  renderCanvas();
+}
+
+function handleFileUpload(e, index) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const now = new Date();
+  const ts = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const url = ev.target.result;
+    const imgEl = new Image();
+    imgEl.onload = () => {
+      state.photos[index] = { file, url, timestamp: ts, imgEl };
+      renderUploadGrid();
+      renderCanvas();
+      showToast('📸 Foto ditambahkan (' + ts + ')');
+    };
+    imgEl.src = url;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto(index) {
+  state.photos.splice(index, 1);
+  renderUploadGrid();
+  renderCanvas();
+  showToast('🗑️ Foto dihapus');
+}
+
+function clearAllPhotos() {
+  if (state.photos.length === 0) return;
+  if (!confirm('Hapus semua foto?')) return;
+  state.photos = [];
+  renderUploadGrid();
+  renderCanvas();
+  showToast('🗑️ Semua foto dihapus');
+}
+
+/* =====================================================================
+   CANVAS RENDERER
+===================================================================== */
+async function renderCanvas() {
+  // Pastikan font sudah siap
+  if (document.fonts && document.fonts.ready) {
+    await document.fonts.ready;
+  }
+
+  const canvas = document.getElementById('collageCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = 1080, H = 1080;
+
+  // ==== BACKGROUND ====
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+  if (isDark) {
+    bgGrad.addColorStop(0, '#0f0f1a');
+    bgGrad.addColorStop(1, '#1a1a2e');
+  } else {
+    bgGrad.addColorStop(0, '#f8f9fc');
+    bgGrad.addColorStop(1, '#eef0f7');
+  }
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // ==== HEADER ====
+  const padding = 60;
+  const headerH = 130;
+  const textColor = isDark ? '#e5e7eb' : '#1a1a2e';
+  const mutedColor = isDark ? '#9ca3af' : '#6b7280';
+
+  // Logo box
+  const logoSize = 60;
+  const logoX = padding;
+  const logoY = padding;
+
+  // Gradient logo box
+  const logoGrad = ctx.createLinearGradient(logoX, logoY, logoX + logoSize, logoY + logoSize);
+  logoGrad.addColorStop(0, '#7C3AED');
+  logoGrad.addColorStop(1, '#3B82F6');
+  ctx.fillStyle = logoGrad;
+  roundRect(ctx, logoX, logoY, logoSize, logoSize, 16);
+  ctx.fill();
+
+  // Emoji toko
+  ctx.font = '32px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#fff';
+  ctx.fillText('🏪', logoX + logoSize/2, logoY + logoSize/2 + 2);
+
+  // Judul outlet
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  const outlet = (document.getElementById('metaOutlet').value || 'Toko').toUpperCase();
+  ctx.font = '800 32px "Plus Jakarta Sans", sans-serif';
+  ctx.fillStyle = textColor;
+  ctx.fillText(outlet, logoX + logoSize + 20, logoY + 4);
+
+  // Sub-judul
+  const kategori = document.getElementById('metaKategori').value;
+  ctx.font = '600 22px "Plus Jakarta Sans", sans-serif';
+  ctx.fillStyle = '#a78bfa';
+  ctx.fillText(kategori, logoX + logoSize + 20, logoY + 40);
+
+  // ==== INFO BAR (tanggal & waktu) ====
+  const now = new Date();
+  const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+
+  // Rentang waktu dari foto
+  const times = state.photos.filter(p => p).map(p => p.timestamp).sort();
+  let timeRange = '--:--';
+  let durationStr = '0 menit';
+  if (times.length > 0) {
+    const first = times[0];
+    const last = times[times.length - 1];
+    timeRange = `${first} – ${last}`;
+    // hitung durasi
+    const [h1, m1] = first.split(':').map(Number);
+    const [h2, m2] = last.split(':').map(Number);
+    let diffMin = (h2 * 60 + m2) - (h1 * 60 + m1);
+    if (diffMin < 0) diffMin += 24 * 60; // handle lewat tengah malam
+    const h = Math.floor(diffMin / 60);
+    const m = diffMin % 60;
+    durationStr = h > 0 ? `${h}j ${m}m` : `${m} menit`;
+  }
+
+  // Info line bawah judul
+  ctx.font = '500 18px "Plus Jakarta Sans", sans-serif';
+  ctx.fillStyle = mutedColor;
+  ctx.fillText(`📅 ${dateStr}`, logoX + logoSize + 20, logoY + 78);
+
+  // ==== GRID FOTO ====
+  const tpl = TEMPLATES[state.template];
+  const cols = tpl.cols;
+  const rows = tpl.rows;
+  const gridTop = headerH + padding;
+  const footerH = 100;
+  const gridBottom = H - footerH - padding;
+  const gridLeft = padding;
+  const gridRight = W - padding;
+  const gridW = gridRight - gridLeft;
+  const gridH = gridBottom - gridTop;
+  const gap = 12;
+
+  const cellW = (gridW - gap * (cols - 1)) / cols;
+  const cellH = (gridH - gap * (rows - 1)) / rows;
+
+  const photoIndexMax = Math.min(state.photos.filter(p => p).length, cols * rows);
+  const filledPhotos = state.photos.filter(p => p).slice(0, cols * rows);
+
+  for (let i = 0; i < cols * rows; i++) {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = gridLeft + col * (cellW + gap);
+    const y = gridTop + row * (cellH + gap);
+
+    // Slot background
+    ctx.fillStyle = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
+    roundRect(ctx, x, y, cellW, cellH, 16);
+    ctx.fill();
+
+    // Border dashed
+    ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 6]);
+    roundRect(ctx, x, y, cellW, cellH, 16);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const photo = filledPhotos[i];
+    if (photo && photo.imgEl && photo.imgEl.complete) {
+      drawImageCover(ctx, photo.imgEl, x, y, cellW, cellH, 16);
+
+      // Timestamp badge
+      const badgeText = photo.timestamp;
+      ctx.font = '600 16px "Plus Jakarta Sans", sans-serif';
+      const badgeW = ctx.measureText(badgeText).width + 20;
+      const badgeH = 28;
+      const bx = x + 12;
+      const by = y + cellH - badgeH - 12;
+
+      ctx.fillStyle = 'rgba(0,0,0,0.75)';
+      roundRect(ctx, bx, by, badgeW, badgeH, 8);
+      ctx.fill();
+
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(badgeText, bx + 10, by + badgeH/2 + 1);
+    } else {
+      // Nomor slot
+      ctx.fillStyle = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)';
+      ctx.font = '700 40px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(i + 1), x + cellW/2, y + cellH/2);
+    }
+  }
+
+  // ==== FOOTER ====
+  const footerY = H - padding - 40;
+  const nama = document.getElementById('metaNama').value || '-';
+  const shift = document.getElementById('metaShift').value;
+  const totalFoto = filledPhotos.length;
+
+  // Footer divider
+  ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padding, footerY - 20);
+  ctx.lineTo(W - padding, footerY - 20);
+  ctx.stroke();
+
+  // Footer info kiri
+  ctx.fillStyle = textColor;
+  ctx.font = '600 18px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`${nama} · ${shift}`, padding, footerY);
+
+  ctx.fillStyle = mutedColor;
+  ctx.font = '500 15px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(`${totalFoto} foto · ${timeRange} · ${durationStr}`, padding, footerY + 24);
+
+  // Footer kanan (branding)
+  ctx.textAlign = 'right';
+  ctx.fillStyle = mutedColor;
+  ctx.font = '600 14px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText('Toko Collage', W - padding, footerY + 10);
+  ctx.font = '500 12px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText('Daily Activity Documentation', W - padding, footerY + 28);
+
+  // Update info canvas
+  document.getElementById('canvasInfo').textContent = `${W} × ${H} px · PNG · ${totalFoto} foto`;
+}
+
+/* =====================================================================
+   HELPERS
+===================================================================== */
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawImageCover(ctx, img, x, y, w, h, r) {
+  ctx.save();
+  roundRect(ctx, x, y, w, h, r);
+  ctx.clip();
+
+  const imgRatio = img.width / img.height;
+  const slotRatio = w / h;
+  let sx, sy, sw, sh;
+  if (imgRatio > slotRatio) {
+    // gambar lebih lebar → crop kiri kanan
+    sh = img.height;
+    sw = sh * slotRatio;
+    sx = (img.width - sw) / 2;
+    sy = 0;
+  } else {
+    // gambar lebih tinggi → crop atas bawah
+    sw = img.width;
+    sh = sw / slotRatio;
+    sx = 0;
+    sy = (img.height - sh) / 2;
+  }
+  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+  ctx.restore();
+}
+
+/* =====================================================================
+   EXPORT / SHARE
+===================================================================== */
+function canvasToBlob() {
+  return new Promise((resolve) => {
+    document.getElementById('collageCanvas').toBlob((blob) => resolve(blob), 'image/png', 0.95);
+  });
+}
+
+async function downloadPNG() {
+  const blob = await canvasToBlob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const now = new Date();
+  const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+  const kategori = document.getElementById('metaKategori').value.replace(/\s+/g, '-');
+  a.download = `collage-${kategori}-${stamp}.png`;
+  a.href = url;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast('⬇️ PNG berhasil di-download');
+}
+
+async function shareCollage() {
+  const blob = await canvasToBlob();
+
+  // Cek Web Share API support
+  if (navigator.canShare && navigator.canShare({ files: [new File([blob], 'x.png', { type: 'image/png' })] })) {
+    const now = new Date();
+    const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+    const kategori = document.getElementById('metaKategori').value.replace(/\s+/g, '-');
+    const file = new File([blob], `collage-${kategori}-${stamp}.png`, { type: 'image/png' });
+
+    const kategoriText = document.getElementById('metaKategori').value;
+    const outletText = document.getElementById('metaOutlet').value;
+
+    try {
+      await navigator.share({
+        files: [file],
+        title: `Collage ${kategoriText}`,
+        text: `📸 Collage ${kategoriText} - ${outletText}\n📅 ${now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`,
+      });
+      showToast('✅ Berhasil di-share');
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        showToast('⚠️ Gagal share, coba Download saja');
+      }
+    }
+  } else {
+    showToast('📱 Share tidak didukung → pakai Download');
+    downloadPNG();
+  }
+}
+
+/* =====================================================================
+   INIT
+===================================================================== */
+(function init() {
+  // Apply theme
+  const savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
+  applyTheme(savedTheme);
+
+  // Render template & upload
+  renderTemplates();
+  renderUploadGrid();
+
+  // Trigger render awal
+  setTimeout(() => renderCanvas(), 100);
+
+  // Live update meta
+  ['metaOutlet','metaKategori','metaNama','metaShift'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => renderCanvas());
+    el.addEventListener('change', () => renderCanvas());
+  });
+})();
+</script>
+
+</body>
+</html>
